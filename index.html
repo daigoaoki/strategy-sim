@@ -125,9 +125,9 @@
       <h2>金利ルール (FF金利 %)</h2>
       <div class="row2">
         <label class="field"><span>下限(以下で買い)</span>
-          <input type="number" id="rLo" value="0.3" step="0.1"></label>
+          <input type="number" id="rLo" value="0.3" step="0.01"></label>
         <label class="field"><span>上限(以上で売り)</span>
-          <input type="number" id="rHi" value="2.5" step="0.1"></label>
+          <input type="number" id="rHi" value="0.31" step="0.01"></label>
       </div>
       <div class="hint">間は直前の状態を維持</div>
     </div>
@@ -136,9 +136,9 @@
       <h2>200DMAルール (%)</h2>
       <div class="row2">
         <label class="field"><span>買いバンド(上回りで買い)</span>
-          <input type="number" id="dBuy" value="5" step="1"></label>
+          <input type="number" id="dBuy" value="0" step="1"></label>
         <label class="field"><span>売りバンド(下回りで売り)</span>
-          <input type="number" id="dSell" value="12" step="1"></label>
+          <input type="number" id="dSell" value="0" step="1"></label>
       </div>
       <div class="hint">幅を広げると売買が減る</div>
     </div>
@@ -159,21 +159,21 @@
         <div style="margin-top:10px">
           <div class="row2">
             <label class="field"><span>QLD 経費率 %/年</span>
-              <input type="number" id="eQLD" value="0.95" step="0.05"></label>
+              <input type="number" id="eQLD" value="0" step="0.05"></label>
             <label class="field"><span>TQQQ 経費率 %/年</span>
-              <input type="number" id="eTQQQ" value="0.86" step="0.05"></label>
+              <input type="number" id="eTQQQ" value="0" step="0.05"></label>
           </div>
           <div class="row2">
             <label class="field"><span>SOXL 経費率 %/年</span>
-              <input type="number" id="eSOXL" value="0.76" step="0.05"></label>
+              <input type="number" id="eSOXL" value="0" step="0.05"></label>
             <label class="field"><span>SPXL 経費率 %/年</span>
-              <input type="number" id="eSPXL" value="0.91" step="0.05"></label>
+              <input type="number" id="eSPXL" value="0" step="0.05"></label>
           </div>
           <div class="row2">
             <label class="field"><span>SPY 経費率 %/年</span>
-              <input type="number" id="eSPY" value="0.09" step="0.01"></label>
+              <input type="number" id="eSPY" value="0" step="0.01"></label>
             <label class="field"><span>借入スプレッド %/年</span>
-              <input type="number" id="spread" value="0.4" step="0.1"></label>
+              <input type="number" id="spread" value="0" step="0.1"></label>
           </div>
           <div class="note">レバレッジ日次 = L×原資産日次 −((L−1)×(FF金利+スプレッド)+経費率)/252。借入コストはFF金利連動。</div>
         </div>

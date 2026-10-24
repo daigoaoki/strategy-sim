@@ -52,12 +52,15 @@ const ym = d=>d.slice(0,7);
 
 function underSeries(){ return MK[ASSET[S.asset].under]; }
 
+const DEFAULT_START = '2010-01';
 function syncPickerRange(){
   const u = underSeries();
   const lo = ym(u.dates[0]), hi = ym(u.dates[u.dates.length-1]);
   startEl.min=endEl.min=lo; startEl.max=endEl.max=hi;
-  if(!startEl.value || startEl.value<lo) startEl.value=lo;
-  if(startEl.value>hi) startEl.value=lo;
+  const want = DEFAULT_START < lo ? lo : DEFAULT_START;   // 既定は2010-01(原資産開始が後ならそれに合わせる)
+  if(!startEl.value) startEl.value = want;
+  if(startEl.value < lo) startEl.value = lo;
+  if(startEl.value > hi) startEl.value = want;
   if(!endEl.value || endEl.value>hi || endEl.value<lo) endEl.value=hi;
 }
 
