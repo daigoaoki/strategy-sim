@@ -14,16 +14,16 @@ import json, csv, io, time, datetime, urllib.request
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/125.0 Safari/537.36")
 
-def get(url, tries=4):
+def get(url, tries=2):
     last = None
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=30) as r:
+            with urllib.request.urlopen(req, timeout=12) as r:
                 return r.read()
         except Exception as e:
             last = e
-            time.sleep(2 * (i + 1))
+            time.sleep(2)
     raise last
 
 def yahoo(symbol):
