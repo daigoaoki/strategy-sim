@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>レバレッジETF 退避戦略シミュレーター</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1e2740; --line:#2a3550;
+    --text:#e8edf7; --muted:#95a3c0; --accent:#4f8cff;
+    --hold:#8b97b0; --rate:#4f8cff; --dma:#2dd4a7; --combo:#f5a524;
+    --up:#2dd4a7; --down:#ff6b7a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    font-size:14px;line-height:1.6;-webkit-text-size-adjust:100%}
+  header{padding:16px 20px;border-bottom:1px solid var(--line);background:var(--panel);
+    display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{margin:0;font-size:17px}
+  header p{margin:3px 0 0;color:var(--muted);font-size:12px}
+  .updbox{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .updbox .upd{font-size:11px;color:var(--muted)}
+  #refresh{background:var(--accent);border:none;color:#fff;padding:9px 14px;border-radius:9px;
+    font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  #refresh:disabled{opacity:.5;cursor:default}
+  .wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;flex-wrap:wrap}
+  .controls{flex:1 1 320px;max-width:360px;display:flex;flex-direction:column;gap:12px}
+  .result{flex:3 1 520px;min-width:300px;display:flex;flex-direction:column;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .card h2{margin:0 0 9px;font-size:12px;color:var(--muted);font-weight:600;
+    letter-spacing:.04em;text-transform:uppercase}
+  label.field{display:block;margin-bottom:9px}
+  label.field>span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  input[type=number],input[type=month],select{width:100%;background:var(--panel2);
+    border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 10px;font-size:15px}
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  .seg button{flex:1 1 auto;background:var(--panel2);border:1px solid var(--line);
+    color:var(--muted);padding:9px 6px;border-radius:8px;cursor:pointer;font-size:13px;min-width:60px}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .row2{display:flex;gap:10px}.row2>*{flex:1}
+  .hint{font-size:11px;color:var(--muted);margin-top:2px}
+  details summary{cursor:pointer;color:var(--muted);font-size:12px;margin-top:4px}
+  canvas{width:100%;display:block;border-radius:8px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:6px 7px;text-align:right;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--muted);font-weight:600;font-size:11px}
+  .swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  tr.sel{background:rgba(79,140,255,.08)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend span{display:inline-flex;align-items:center}
+  .pos{font-size:12px;color:var(--muted);margin-top:6px}
+  .warn{color:#f5a524}
+  #tip{position:fixed;pointer-events:none;background:#0b0f18;border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px;font-size:12px;display:none;z-index:9;white-space:nowrap}
+  .note{font-size:11px;color:var(--muted);line-height:1.5}
+  .yrtable-wrap{overflow-x:auto}
+  .pill{font-variant-numeric:tabular-nums}
+  @media(max-width:560px){
+    header h1{font-size:15px}
+    .controls{max-width:none}
+    .wrap{padding:12px;gap:12px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>レバレッジETF　退避戦略シミュレーター</h1>
+    <p>NDX100/QLD/TQQQ・SOX/SOXL・SPY/SPXL。レバレッジ版は日次複利で仮想再現。金利・200日移動平均で退避。</p>
+  </div>
+  <div class="updbox">
+    <span class="upd" id="upd"></span>
+    <button id="refresh">↻ 今日まで更新</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ========== CONTROLS ========== -->
+  <div class="controls">
+    <div class="card">
+      <h2>対象資産</h2>
+      <div class="seg" id="asset">
+        <button data-v="NDX" class="on">NDX100</button>
+        <button data-v="QLD">QLD 2倍</button>
+        <button data-v="TQQQ">TQQQ 3倍</button>
+        <button data-v="SOX">SOX</button>
+        <button data-v="SOXL">SOXL 3倍</button>
+        <button data-v="SPY">SPY</button>
+        <button data-v="SPXL">SPXL 3倍</button>
+      </div>
+      <div class="hint" id="assetHint"></div>
+    </div>
+
+    <div class="card">
+      <h2>期間・投資額</h2>
+      <div class="row2">
+        <label class="field"><span>開始年月</span><input type="month" id="start"></label>
+        <label class="field"><span>終了年月</span><input type="month" id="end"></label>
+      </div>
+      <label class="field"><span>初期投資額 (ドル)</span>
+        <input type="number" id="cap" value="10000" min="1" step="1000"></label>
+    </div>
+
+    <div class="card">
+      <h2>戦略</h2>
+      <div class="seg" id="strat">
+        <button data-v="hold" class="on">ホールド</button>
+        <button data-v="rate">金利</button>
+        <button data-v="dma">200DMA</button>
+        <button data-v="combo">金利+200DMA</button>
+      </div>
+      <div id="comboBox" style="display:none;margin-top:12px">
+        <span style="font-size:12px;color:var(--muted)">組み合わせ方法</span>
+        <div class="seg" id="logic" style="margin-top:4px">
+          <button data-v="OR" class="on">OR(積極)</button>
+          <button data-v="AND">AND(慎重)</button>
+        </div>
+        <div class="hint">OR=どちらか買いで保有／AND=両方買いで保有</div>
+      </div>
+    </div>
+
+    <div class="card" id="rateCard">
+      <h2>金利ルール (FF金利 %)</h2>
+      <div class="row2">
+        <label class="field"><span>下限(以下で買い)</span>
+          <input type="number" id="rLo" value="0.3" step="0.1"></label>
+        <label class="field"><span>上限(以上で売り)</span>
+          <input type="number" id="rHi" value="2.5" step="0.1"></label>
+      </div>
+      <div class="hint">間は直前の状態を維持</div>
+    </div>
+
+    <div class="card" id="dmaCard">
+      <h2>200DMAルール (%)</h2>
+      <div class="row2">
+        <label class="field"><span>買いバンド(上回りで買い)</span>
+          <input type="number" id="dBuy" value="5" step="1"></label>
+        <label class="field"><span>売りバンド(下回りで売り)</span>
+          <input type="number" id="dSell" value="12" step="1"></label>
+      </div>
+      <div class="hint">幅を広げると売買が減る</div>
+    </div>
+
+    <div class="card">
+      <h2>退避先</h2>
+      <div class="seg" id="escape">
+        <button data-v="cash" class="on">現金 0%</button>
+        <button data-v="mmf">MMF(短期金利)</button>
+        <button data-v="index">1倍指数</button>
+      </div>
+      <div class="hint">「1倍指数」=同じ原資産のレバレッジなし版</div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>詳細設定(経費率・借入コスト)</summary>
+        <div style="margin-top:10px">
+          <div class="row2">
+            <label class="field"><span>QLD 経費率 %/年</span>
+              <input type="number" id="eQLD" value="0.95" step="0.05"></label>
+            <label class="field"><span>TQQQ 経費率 %/年</span>
+              <input type="number" id="eTQQQ" value="0.86" step="0.05"></label>
+          </div>
+          <div class="row2">
+            <label class="field"><span>SOXL 経費率 %/年</span>
+              <input type="number" id="eSOXL" value="0.76" step="0.05"></label>
+            <label class="field"><span>SPXL 経費率 %/年</span>
+              <input type="number" id="eSPXL" value="0.91" step="0.05"></label>
+          </div>
+          <div class="row2">
+            <label class="field"><span>SPY 経費率 %/年</span>
+              <input type="number" id="eSPY" value="0.09" step="0.01"></label>
+            <label class="field"><span>借入スプレッド %/年</span>
+              <input type="number" id="spread" value="0.4" step="0.1"></label>
+          </div>
+          <div class="note">レバレッジ日次 = L×原資産日次 −((L−1)×(FF金利+スプレッド)+経費率)/252。借入コストはFF金利連動。</div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- ========== RESULTS ========== -->
+  <div class="result">
+    <div class="card">
+      <h2>資産推移(対数スケール)</h2>
+      <canvas id="chart" height="400"></canvas>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--hold)"></i>ホールド</span>
+        <span><i class="swatch" style="background:var(--rate)"></i>金利</span>
+        <span><i class="swatch" style="background:var(--dma)"></i>200DMA</span>
+        <span><i class="swatch" style="background:var(--combo)"></i>金利+200DMA</span>
+      </div>
+      <div class="pos" id="posnote"></div>
+    </div>
+
+    <div class="card">
+      <h2>成績比較</h2>
+      <table id="stats">
+        <thead><tr><th>戦略</th><th>最終資産</th><th>総リターン</th><th>年率</th>
+          <th>最大DD</th><th>売買</th><th>保有率</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="note" style="margin-top:10px" id="rangeNote"></div>
+    </div>
+
+    <div class="card">
+      <h2>年次リターン(各年の騰落率)</h2>
+      <div class="yrtable-wrap">
+        <table id="yearly">
+          <thead><tr><th>年</th>
+            <th><span class="swatch" style="background:var(--hold)"></span>ホールド</th>
+            <th><span class="swatch" style="background:var(--rate)"></span>金利</th>
+            <th><span class="swatch" style="background:var(--dma)"></span>200DMA</th>
+            <th><span class="swatch" style="background:var(--combo)"></span>金利+200DMA</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tip"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
