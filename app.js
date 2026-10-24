@@ -326,8 +326,35 @@ function mergeYahoo(series, j){
   return added;
 }
 const rbtn=document.getElementById('refresh');
+
+/* Discord Webhook 経由で Mac常駐Bot に !update を依頼する(設定時のみ) */
+async function requestViaDiscord(){
+  const hook=(window.DISCORD_WEBHOOK||'').trim();
+  if(!hook) return false;
+  const r=await fetch(hook,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({content:'!update'})});
+  if(!(r.status===204||r.ok)) throw new Error('webhook '+r.status);
+  return true;
+}
+
 rbtn.addEventListener('click', async()=>{
-  rbtn.disabled=true; const old=rbtn.textContent; rbtn.textContent='更新中…';
+  rbtn.disabled=true; const old=rbtn.textContent;
+  // Webhook が設定されていれば Discord 経由で Mac に依頼
+  if((window.DISCORD_WEBHOOK||'').trim()){
+    rbtn.textContent='依頼中…';
+    try{
+      await requestViaDiscord();
+      rbtn.textContent='✓ 依頼しました';
+      document.getElementById('upd').textContent=
+        'Macで更新中… 1〜2分後にページを再読込してください';
+      setTimeout(()=>{rbtn.textContent=old;rbtn.disabled=false;},4000);
+    }catch(e){
+      rbtn.textContent='⚠ 依頼失敗';
+      setTimeout(()=>{rbtn.textContent=old;rbtn.disabled=false;},3000);
+    }
+    return;
+  }
+  rbtn.textContent='更新中…';
   try{
     const now=Math.floor(Date.now()/1000);
     const jobs=[
